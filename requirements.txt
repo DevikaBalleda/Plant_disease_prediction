@@ -1,0 +1,27 @@
+# ─────────────────────────────────────────────────────────────────────────
+# requirements.txt – Plant Disease Detection (Deployment)
+# ─────────────────────────────────────────────────────────────────────────
+
+# Deep Learning (CPU-only build for smaller Docker image)
+# Use tensorflow-cpu for cloud/Docker deployments
+tensorflow-cpu==2.16.1
+
+# Image Processing
+Pillow>=9.5.0
+opencv-python-headless>=4.8.0
+
+# Scientific Computing
+numpy>=1.24.0,<2.0.0
+
+# Web Framework
+flask>=2.3.0
+Werkzeug>=2.3.0
+
+# PDF Report Generation
+reportlab>=4.0.0
+
+# Utilities
+requests>=2.31.0
+
+# Production WSGI server (required for Render.com deployment)
+gunicorn>=21.2.0

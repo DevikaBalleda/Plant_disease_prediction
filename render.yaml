@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: plant-disease-detection
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: FLASK_ENV
+        value: production
+    healthCheckPath: /
+    autoDeploy: true

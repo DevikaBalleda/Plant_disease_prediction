@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────
+# .gitignore – Plant Disease Detection Project
+# ─────────────────────────────────────────────
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Data (large files – use DVC or download separately)
+data/raw/
+data/processed/
+*.csv
+*.parquet
+
+# Trained Models (large binaries – keep .keras committed for deployment)
+models/saved_model/*.h5
+# models/saved_model/*.keras  ← intentionally NOT ignored — needed for Render
+models/saved_model/*.pb
+models/saved_model/variables/
+
+# Logs & TensorBoard
+logs/
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter Checkpoints
+.ipynb_checkpoints/
+
+# Flask Uploads (runtime)
+app/static/uploads/
+
+# Environment Config
+.env
+*.env.local
+
+# Coverage
+.coverage
+htmlcov/

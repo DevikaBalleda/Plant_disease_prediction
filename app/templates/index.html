@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="AI-powered plant disease detection and treatment recommendation system for farmers."/>
+  <title>🌿 Plant Disease Detector | AI Diagnosis Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ HEADER ═══════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🌿</span>
+      <div>
+        <h1>PlantMD</h1>
+        <p class="logo-sub">AI Disease Detector</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <button id="langToggle" class="btn-lang" onclick="toggleLang()" title="Toggle Hindi/English">🇮🇳 हिंदी</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════ HERO ════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="badge en">🧠 Powered by MobileNetV2 · 38 Disease Classes</div>
+    <div class="badge hi" style="display:none">🧠 MobileNetV2 द्वारा संचालित · 38 रोग श्रेणियाँ</div>
+    <h2 class="hero-title en">Detect Plant Diseases<br/><span class="gradient-text">Instantly with AI</span></h2>
+    <h2 class="hero-title hi" style="display:none">पौधों की बीमारियाँ पहचानें<br/><span class="gradient-text">AI के साथ तुरंत</span></h2>
+    <p class="hero-sub en">Upload a leaf photo to get instant diagnosis, confidence score, medicine recommendations, and organic treatment options.</p>
+    <p class="hero-sub hi" style="display:none">पत्ती की फोटो अपलोड करें और तुरंत निदान, दवा की सिफारिशें, और जैविक उपचार विकल्प पाएं।</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ MAIN ════════════════════════════════ -->
+<main class="main-content">
+  <div class="container">
+
+    <!-- Upload Card -->
+    <div class="card upload-card" id="uploadCard">
+      <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()"
+           ondragover="event.preventDefault(); this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="handleDrop(event)">
+        <div class="drop-icon">📷</div>
+        <p class="drop-title en">Drop your leaf image here</p>
+        <p class="drop-title hi" style="display:none">यहाँ पत्ती की छवि छोड़ें</p>
+        <p class="drop-sub en">or click to browse · PNG, JPG, WEBP · Max 16 MB</p>
+        <p class="drop-sub hi" style="display:none">या ब्राउज़ करने के लिए क्लिक करें · अधिकतम 16 MB</p>
+        <img id="previewImg" class="preview-img" style="display:none" alt="Preview"/>
+      </div>
+      <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.webp" style="display:none" onchange="handleFile(event)"/>
+      <button id="analyzeBtn" class="btn-primary" onclick="analyzeImage()" disabled>
+        <span class="en">🔍 Analyze Leaf</span>
+        <span class="hi" style="display:none">🔍 पत्ती का विश्लेषण करें</span>
+      </button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSection" class="loading-section" style="display:none">
+      <div class="spinner"></div>
+      <p class="en">Analyzing your leaf image…</p>
+      <p class="hi" style="display:none">पत्ती की छवि का विश्लेषण हो रहा है…</p>
+    </div>
+
+    <!-- Model Not Ready Banner -->
+    <div id="modelNotReadyBanner" class="alert alert-warning" style="display:none">
+      <strong>⚠️ Model Not Trained Yet</strong><br/>
+      Please train the model first:<br/>
+      <code>python -m src.models.train --data_dir data/raw/PlantVillage</code>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="errorBanner" class="alert alert-danger" style="display:none"></div>
+
+    <!-- Low Confidence Warning -->
+    <div id="lowConfBanner" class="alert alert-caution" style="display:none">
+      ⚠️ <span class="en">Low confidence result — please try a clearer image or consult an agronomist.</span>
+      <span class="hi" style="display:none">कम विश्वास परिणाम — कृपया स्पष्ट छवि का प्रयास करें।</span>
+    </div>
+
+    <!-- ── RESULTS SECTION ────────────────────────────────── -->
+    <div id="resultsSection" style="display:none">
+
+      <!-- Summary Banner -->
+      <div id="summaryBanner" class="summary-banner">
+        <div class="summary-left">
+          <div id="summaryIcon" class="summary-icon">🌿</div>
+          <div>
+            <h3 id="summaryName" class="summary-name">–</h3>
+            <p id="summaryHindi" class="summary-hindi">–</p>
+          </div>
+        </div>
+        <div class="summary-right">
+          <div class="stat-chip">
+            <span class="stat-label en">Confidence</span>
+            <span class="stat-label hi" style="display:none">विश्वास</span>
+            <span id="confidenceVal" class="stat-val">–</span>
+          </div>
+          <div class="stat-chip" id="severityChip">
+            <span class="stat-label en">Severity</span>
+            <span class="stat-label hi" style="display:none">गंभीरता</span>
+            <span id="severityVal" class="stat-val">–</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confidence Bar -->
+      <div class="conf-bar-container">
+        <div class="conf-bar-track">
+          <div id="confBar" class="conf-bar-fill"></div>
+        </div>
+        <span id="confBarLabel" class="conf-bar-label"></span>
+      </div>
+
+      <!-- Images Row: Original + Grad-CAM -->
+      <div class="images-row">
+        <div class="img-card">
+          <p class="img-label en">📷 Original Leaf</p>
+          <p class="img-label hi" style="display:none">📷 मूल पत्ती</p>
+          <img id="origResultImg" src="" alt="Original leaf" class="result-img"/>
+        </div>
+        <div class="img-card" id="camCard" style="display:none">
+          <p class="img-label en">🔥 Grad-CAM – Model Focus Area</p>
+          <p class="img-label hi" style="display:none">🔥 ग्रेड-कैम – मॉडल फोकस क्षेत्र</p>
+          <img id="camResultImg" src="" alt="Grad-CAM overlay" class="result-img"/>
+        </div>
+      </div>
+
+      <!-- Top-3 Predictions -->
+      <div class="card section-card">
+        <h4 class="section-title en">🏆 Top Predictions</h4>
+        <h4 class="section-title hi" style="display:none">🏆 शीर्ष भविष्यवाणियाँ</h4>
+        <div id="top3Container" class="top3-grid"></div>
+      </div>
+
+      <!-- Description & Cause -->
+      <div class="info-grid">
+        <div class="card section-card">
+          <h4 class="section-title en">📖 About This Disease</h4>
+          <h4 class="section-title hi" style="display:none">📖 इस रोग के बारे में</h4>
+          <p id="descriptionText" class="info-text"></p>
+          <div class="cause-chip">
+            <strong class="en">Cause:</strong>
+            <strong class="hi" style="display:none">कारण:</strong>
+            <span id="causeText"></span>
+          </div>
+        </div>
+
+        <!-- Symptoms -->
+        <div class="card section-card">
+          <h4 class="section-title en">🔎 Symptoms</h4>
+          <h4 class="section-title hi" style="display:none">🔎 लक्षण</h4>
+          <ul id="symptomsList" class="info-list"></ul>
+        </div>
+      </div>
+
+      <!-- Treatment Cards Row -->
+      <div class="treatment-grid">
+        <!-- Chemical -->
+        <div class="card treatment-card chemical">
+          <h4 class="treat-title">
+            <span class="treat-icon">⚗️</span>
+            <span class="en">Chemical Treatment</span>
+            <span class="hi" style="display:none">रासायनिक उपचार</span>
+          </h4>
+          <ul id="chemList" class="treat-list"></ul>
+        </div>
+        <!-- Organic -->
+        <div class="card treatment-card organic">
+          <h4 class="treat-title">
+            <span class="treat-icon">🌱</span>
+            <span class="en">Organic Treatment</span>
+            <span class="hi" style="display:none">जैविक उपचार</span>
+          </h4>
+          <ul id="orgList" class="treat-list"></ul>
+        </div>
+        <!-- Prevention -->
+        <div class="card treatment-card prevention">
+          <h4 class="treat-title">
+            <span class="treat-icon">🛡️</span>
+            <span class="en">Prevention</span>
+            <span class="hi" style="display:none">रोकथाम</span>
+          </h4>
+          <ul id="prevList" class="treat-list"></ul>
+        </div>
+      </div>
+
+      <!-- Actions Row -->
+      <div class="actions-row">
+        <button class="btn-secondary" onclick="resetForm()">
+          <span class="en">🔄 Analyze Another</span>
+          <span class="hi" style="display:none">🔄 एक और विश्लेषण करें</span>
+        </button>
+        <button class="btn-pdf" id="downloadPdfBtn" onclick="downloadPDF()">
+          <span class="en">📄 Download Report (PDF)</span>
+          <span class="hi" style="display:none">📄 रिपोर्ट डाउनलोड करें (PDF)</span>
+        </button>
+      </div>
+    </div><!-- /resultsSection -->
+
+  </div><!-- /container -->
+</main>
+
+<!-- ═══════════════════════════════════════════ FOOTER ══════════════════════════════ -->
+<footer class="footer">
+  <p class="en">Built with ❤️ using TensorFlow &amp; MobileNetV2 · PlantVillage Dataset · For educational use</p>
+  <p class="hi" style="display:none">TensorFlow और MobileNetV2 से बनाया गया · PlantVillage डेटासेट · शैक्षिक उपयोग के लिए</p>
+</footer>
+
+<script>
+// ═══════════════════════════════ STATE ═════════════════════════════════
+let currentFile    = null;
+let currentResult  = null;
+let isHindi        = false;
+
+// ═══════════════════════════════ LANGUAGE ══════════════════════════════
+function toggleLang() {
+  isHindi = !isHindi;
+  document.querySelectorAll('.en').forEach(el => el.style.display = isHindi ? 'none' : '');
+  document.querySelectorAll('.hi').forEach(el => el.style.display = isHindi ? '' : 'none');
+  document.getElementById('langToggle').textContent = isHindi ? '🇬🇧 English' : '🇮🇳 हिंदी';
+}
+
+// ═══════════════════════════════ FILE HANDLING ══════════════════════════
+function handleFile(event) {
+  const file = event.target.files[0];
+  if (file) loadFile(file);
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  const file = event.dataTransfer.files[0];
+  if (file) { document.getElementById('fileInput').files = event.dataTransfer.files; loadFile(file); }
+}
+
+function loadFile(file) {
+  currentFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('previewImg');
+    preview.src     = e.target.result;
+    preview.style.display = 'block';
+    document.querySelector('.drop-icon').style.display = 'none';
+    document.querySelector('.drop-title.en').style.display = 'none';
+    document.querySelector('.drop-sub.en').style.display   = 'none';
+    document.getElementById('analyzeBtn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ═══════════════════════════════ ANALYZE ════════════════════════════════
+async function analyzeImage() {
+  if (!currentFile) return;
+  hide('resultsSection'); hide('errorBanner'); hide('lowConfBanner');
+  hide('modelNotReadyBanner');
+  show('loadingSection');
+  document.getElementById('analyzeBtn').disabled = true;
+
+  const formData = new FormData();
+  formData.append('file', currentFile);
+
+  try {
+    const resp = await fetch('/predict', { method: 'POST', body: formData });
+    const data = await resp.json();
+    hide('loadingSection');
+
+    if (data.error === 'model_not_found') {
+      show('modelNotReadyBanner'); return;
+    }
+    if (data.error) {
+      document.getElementById('errorBanner').innerHTML = '❌ ' + data.error;
+      show('errorBanner'); return;
+    }
+
+    currentResult = data;
+    renderResults(data);
+
+    // Save report JSON for PDF endpoint
+    await fetch('/save_report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+  } catch (err) {
+    hide('loadingSection');
+    document.getElementById('errorBanner').innerHTML = '❌ Network error: ' + err.message;
+    show('errorBanner');
+  }
+}
+
+// ═══════════════════════════════ RENDER RESULTS ══════════════════════════
+function renderResults(d) {
+  const healthy = d.is_healthy;
+
+  // Summary banner
+  document.getElementById('summaryIcon').textContent = healthy ? '✅' : '🍂';
+  document.getElementById('summaryName').textContent  = d.display_name;
+  document.getElementById('summaryHindi').textContent = d.hindi_name;
+  document.getElementById('confidenceVal').textContent = d.confidence_pct.toFixed(1) + '%';
+
+  const sev  = document.getElementById('severityVal');
+  const chip = document.getElementById('severityChip');
+  if (healthy) { sev.textContent = 'Healthy'; chip.classList.add('healthy'); }
+  else {
+    sev.textContent = d.severity;
+    chip.className  = 'stat-chip sev-' + d.severity.toLowerCase();
+  }
+
+  // Confidence bar
+  const bar   = document.getElementById('confBar');
+  bar.style.width = d.confidence_pct + '%';
+  bar.style.background = d.confidence_pct > 85 ? '#2E7D32'
+    : d.confidence_pct > 60 ? '#F9A825' : '#C62828';
+  document.getElementById('confBarLabel').textContent = d.confidence_pct.toFixed(1) + '%';
+
+  // Images
+  document.getElementById('origResultImg').src = d.original_image;
+  if (d.gradcam_image) {
+    document.getElementById('camResultImg').src = d.gradcam_image;
+    show('camCard');
+  } else hide('camCard');
+
+  // Top-3
+  const t3 = document.getElementById('top3Container');
+  t3.innerHTML = d.top3.map((p, i) => `
+    <div class="top3-item rank-${i+1}">
+      <span class="rank">#${i+1}</span>
+      <span class="t3-label">${p.label.replace(/_/g,' ').replace('  ',' ')}</span>
+      <span class="t3-conf">${(p.confidence*100).toFixed(1)}%</span>
+    </div>
+  `).join('');
+
+  // Info
+  const di = d.disease_info;
+  document.getElementById('descriptionText').textContent = di.description;
+  document.getElementById('causeText').textContent       = di.cause;
+
+  fillList('symptomsList',  di.symptoms);
+  fillList('chemList',      di.chemical_treatment);
+  fillList('orgList',       di.organic_treatment);
+  fillList('prevList',      di.prevention);
+
+  // Low confidence warning
+  if (d.low_confidence) show('lowConfBanner');
+
+  // Summary banner color
+  const banner = document.getElementById('summaryBanner');
+  banner.className = 'summary-banner ' + (healthy ? 'banner-healthy' : 'banner-disease');
+
+  show('resultsSection');
+  document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function fillList(id, items) {
+  document.getElementById(id).innerHTML =
+    (items || []).map(i => `<li>${i}</li>`).join('');
+}
+
+// ═══════════════════════════════ PDF ════════════════════════════════════
+function downloadPDF() {
+  if (!currentResult) return;
+  window.location.href = '/report/' + currentResult.uid;
+}
+
+// ═══════════════════════════════ RESET ══════════════════════════════════
+function resetForm() {
+  currentFile   = null;
+  currentResult = null;
+  document.getElementById('fileInput').value     = '';
+  document.getElementById('previewImg').style.display = 'none';
+  document.querySelector('.drop-icon').style.display  = '';
+  document.querySelector('.drop-title.en').style.display = '';
+  document.querySelector('.drop-sub.en').style.display   = '';
+  document.getElementById('analyzeBtn').disabled = true;
+  hide('resultsSection'); hide('lowConfBanner'); hide('errorBanner');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════ UTILS ══════════════════════════════════
+function show(id) { document.getElementById(id).style.display = ''; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+</script>
+</body>
+</html>
