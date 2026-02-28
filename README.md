@@ -329,16 +329,44 @@ Result :
 
 ---
 
-## 📄 License
+## ⚠️ Project Limitations
 
-MIT License – free to use for educational and research purposes.
+While this Plant Disease Detection & Treatment Recommendation System demonstrates the practical application of deep learning in agriculture, it has the following limitations:
+
+1. **Limited Dataset Diversity**
+   - The model is trained on a specific dataset and may not generalize well to unseen environmental conditions.
+   - Variations in lighting, background noise, and camera quality can affect prediction accuracy.
+
+2. **Class Imbalance**
+   - Some disease classes have fewer training samples, which may reduce prediction performance for those categories.
+
+3. **Not Suitable for Real-Time Field Deployment**
+   - The current implementation is designed for demonstration and research purposes.
+   - It has not been optimized for edge devices or low-resource agricultural environments.
+
+4. **Confidence Threshold Sensitivity**
+   - Predictions with low confidence may not always be reliable.
+   - The model may misclassify visually similar diseases.
+
+5. **Limited Crop Coverage**
+   - The system supports only the plant species included in the training dataset.
+   - It does not generalize to all crops or regional plant varieties.
+
+6. **No Clinical/Expert Validation**
+   - The treatment recommendations are dataset-based and not validated by agricultural experts.
+   - This system should not replace professional agronomic consultation.
+
+7. **Deployment Constraints**
+   - The application may require significant memory due to TensorFlow dependencies.
+   - Free-tier hosting platforms may struggle with large ML models.
 
 ---
 
-## 🤝 Contributing
+## 🔮 Future Improvements
 
-Pull requests are welcome. For major changes, please open an issue first.
-
----
-
-*Built with ❤️ using TensorFlow & MobileNetV2 · Suitable for research, internships, and hackathons.*
+- Expand dataset with real-world field images.
+- Implement advanced architectures (EfficientNet / Vision Transformers).
+- Add real-time camera integration.
+- Deploy optimized lightweight models using TensorFlow Lite.
+- Integrate expert-validated treatment recommendations.
+- Improve multi-language support and accessibility.
