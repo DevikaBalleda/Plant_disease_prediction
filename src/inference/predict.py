@@ -23,11 +23,6 @@ import json
 import os
 import numpy as np
 import tensorflow as tf
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import cv2
 
 from src.utils.config import (
     BEST_MODEL_PATH, LABELS_PATH, CONFIDENCE_THRESHOLD,
@@ -145,6 +140,7 @@ class Predictor:
         -------
         (result_dict, heatmap_overlay_bgr_array)
         """
+        import cv2  # lazy import — only needed for Grad-CAM
 
         result = self.predict(image_path=image_path)
         heatmap = self._compute_gradcam(image_path)
@@ -214,6 +210,7 @@ class Predictor:
         -------
         BGR numpy array (suitable for cv2.imwrite / display)
         """
+        import cv2  # lazy import — only needed for Grad-CAM
 
         img = cv2.imread(image_path)
         img = cv2.resize(img, IMAGE_SIZE)

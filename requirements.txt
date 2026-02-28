@@ -25,3 +25,6 @@ requests>=2.31.0
 
 # Production WSGI server (required for Render.com deployment)
 gunicorn>=21.2.0
+
+# Visualization (used in Grad-CAM)
+matplotlib>=3.7.0
